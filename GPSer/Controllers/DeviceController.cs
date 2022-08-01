@@ -1,4 +1,5 @@
-﻿using GPSer.Data;
+﻿using GPSer.API.Data.UnitOfWork;
+using GPSer.Data;
 using GPSer.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,24 +11,23 @@ namespace GPSer.Controllers
     [ApiController]
     public class DeviceController : ControllerBase
     {
-        private readonly ILogger<DeviceController> _logger;
-        private readonly GPSerDbContext _context;
-        public DeviceController(ILogger<DeviceController> logger, GPSerDbContext context)
+        private readonly IRepository<Device> deviceRepo;
+
+        public DeviceController(IRepository<Device> deviceRepo)
         {
-            _logger = logger;
-            _context = context;
+            this.deviceRepo = deviceRepo;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Device>>> GetDevices()
         {
-            return await _context.Devices.ToListAsync();
+            return await deviceRepo.ListAll().ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<Device>>> GetDeviceById(int id)
+        public async Task<ActionResult<IEnumerable<Device>>> GetDeviceById(Guid id)
         {
-            var device = await _context.Devices.FindAsync(id);
+            var device = await deviceRepo.GetByIdAsync(id);
 
             return device == null ? NotFound() : Ok(device);
         }
@@ -35,37 +35,34 @@ namespace GPSer.Controllers
         [HttpPost]
         public async Task<ActionResult<Device>> AddDevice(Device device)
         {
-            await _context.Devices.AddAsync(device);
-            await _context.SaveChangesAsync();
+            await deviceRepo.AddAsync(device);
 
             return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateDevice(int id, Device device)
+        public async Task<IActionResult> UpdateDevice(Guid id, Device device)
         {
             if (id == device.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(device).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            deviceRepo.Update(device);
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDevice(int id)
+        public async Task<IActionResult> DeleteDevice(Guid id)
         {
-            var deviceToDelete = await _context.Devices.FindAsync(id);
+            var deviceToDelete = await deviceRepo.GetByIdAsync(id);
             if (deviceToDelete == null)
             { 
                 return NotFound();
             }
 
-            _context.Devices.Remove(deviceToDelete);
-            await _context.SaveChangesAsync();
+            deviceRepo.Delete(deviceToDelete);
 
             return NoContent();
         }

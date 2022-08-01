@@ -1,11 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using GPSer.API.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace GPSer.Models
 {
-    public class Device
+    public class Device : Entity<Guid>
     {
-        [Required]
-        public int Id { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]
