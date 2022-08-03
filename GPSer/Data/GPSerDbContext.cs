@@ -1,4 +1,5 @@
-﻿using GPSer.Models;
+﻿using GPSer.API.Models;
+using GPSer.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace GPSer.Data
@@ -10,6 +11,7 @@ namespace GPSer.Data
         {
         }
 
-        public DbSet<Device> Devices { get; set; }
+        public DbSet<Device>? Devices { get; set; }
+        public DbSet<User>? Users { get; set; }
     }
 }
