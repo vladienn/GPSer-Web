@@ -59,7 +59,8 @@ namespace GPSer.API.Controllers
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserName)
+                new Claim(ClaimTypes.NameIdentifier, user.UserName),
+                new Claim(ClaimTypes.Role, "Admin")
             };
 
             var token = new JwtSecurityToken(issuer: config["Jwt:Issuer"],
