@@ -1,4 +1,6 @@
-﻿using GPSer.API.Data.UnitOfWork;
+﻿using AutoMapper;
+using GPSer.API.Data.UnitOfWork;
+using GPSer.API.DTOs.User;
 using GPSer.API.Models;
 using GPSer.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -16,19 +18,30 @@ namespace GPSer.API.Controllers
     public class AuthenticateController : ControllerBase
     {
         private readonly IConfiguration config;
-        private readonly IRepository<User> userRepo;
+        private readonly IUserRepository userRepo;
+        private readonly IMapper mapper;
 
-        public AuthenticateController(IRepository<User> userRepo, IConfiguration config)
+        public AuthenticateController(IUserRepository userRepo, IConfiguration config, IMapper mapper)
         {
             this.userRepo = userRepo;
             this.config = config;
+            this.mapper = mapper;
         }
 
         [AllowAnonymous]
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register(User user)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Register(UserDTO userDTO)
         {
+            var userExists = await userRepo.GetByUserName(userDTO.UserName);
+            if (userExists != null)
+            {
+                return StatusCode(500, "User already exists!");
+            }
+
+            User user = mapper.Map<User>(userDTO);
+
             await userRepo.AddAsync(user);
 
             return Ok("User created successfully!");

@@ -1,4 +1,7 @@
-﻿using GPSer.API.Data.UnitOfWork;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using GPSer.API.Data.UnitOfWork;
+using GPSer.API.DTOs;
 using GPSer.Data;
 using GPSer.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,16 +18,20 @@ namespace GPSer.Controllers
     public class DeviceController : ControllerBase
     {
         private readonly IRepository<Device> deviceRepo;
+        private readonly IMapper mapper;
 
-        public DeviceController(IRepository<Device> deviceRepo)
+        public DeviceController(IRepository<Device> deviceRepo, IMapper mapper)
         {
             this.deviceRepo = deviceRepo;
+            this.mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Device>>> GetDevices()
+        public async Task<ActionResult<List<DeviceDTO>>> GetDevices()
         {
-            return await deviceRepo.ListAll().ToListAsync();
+            var devices = await deviceRepo.ListAll().ToListAsync();
+
+            return mapper.Map<List<DeviceDTO>>(devices);
         }
 
         [HttpGet("{id}")]
@@ -36,8 +43,10 @@ namespace GPSer.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Device>> AddDevice(Device device)
+        public async Task<ActionResult<Device>> AddDevice(DeviceDTO deviceDTO)
         {
+            Device device = mapper.Map<Device>(deviceDTO);
+
             await deviceRepo.AddAsync(device);
 
             return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);

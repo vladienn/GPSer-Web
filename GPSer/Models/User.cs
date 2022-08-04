@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace GPSer.API.Models;
 public class User : Entity<Guid>
@@ -14,5 +15,9 @@ public class User : Entity<Guid>
     public string? LastName { get; set; }
 
     [Required]
+    public string? Email { get; set; }
+
+    [Required]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public Roles Role { get; set; }
 }

@@ -13,5 +13,6 @@ namespace GPSer.Data
 
         public DbSet<Device>? Devices { get; set; }
         public DbSet<User>? Users { get; set; }
+        public DbSet<LocationData>? LocationDatas { get; set; }
     }
 }
