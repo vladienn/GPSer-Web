@@ -8,6 +8,10 @@ using System.Text;
 using Swashbuckle.AspNetCore.Filters;
 using AutoMapper;
 using GPSer.API.Automapper;
+using MQTTnet.Client;
+using MQTTnet;
+using GPSer.API.Workers;
+using GPSer.API.State;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,25 +45,20 @@ builder.Services.AddSwaggerGen(options => {
         Description = "JWT Authorization header using the Bearer scheme.(\"bearer {token}\")",
     });
     options.OperationFilter<SecurityRequirementsOperationFilter>();
-    //options.AddSecurityRequirement(new OpenApiSecurityRequirement {
-    //    {
-    //        new OpenApiSecurityScheme {
-    //            Reference = new OpenApiReference {
-    //                Type = ReferenceType.SecurityScheme,
-    //                    Id = "Bearer"
-    //            }
-    //        },
-    //        new string[] {}
-    //    }
-    //});
 });
+
 builder.Services.AddDbContext<GPSerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+builder.Services.AddHostedService<MQTTLocationWorker>();
+
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
 
+builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
+
+//Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
         options.TokenValidationParameters = new TokenValidationParameters

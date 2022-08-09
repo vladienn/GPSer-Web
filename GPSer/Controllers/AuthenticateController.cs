@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using GPSer.API.Data.UnitOfWork;
-using GPSer.API.DTOs.User;
+using GPSer.API.DTOs;
 using GPSer.API.Models;
 using GPSer.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GPSer.API.Controllers
 {
@@ -62,7 +64,7 @@ namespace GPSer.API.Controllers
                 return Ok(token);
             }
 
-            return NotFound("User Not Found!");
+            return Unauthorized();
         }
 
         private string Generate(User user)
@@ -73,7 +75,7 @@ namespace GPSer.API.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserName),
-                new Claim(ClaimTypes.Role, "Admin")
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var token = new JwtSecurityToken(issuer: config["Jwt:Issuer"],

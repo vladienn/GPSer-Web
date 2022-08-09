@@ -2,7 +2,7 @@
 
 namespace GPSer.API.Models;
 
-public class LocationEntity<T>
+public class LocationEntity<T> : IEntity where T : struct
 {
     public virtual T Id { get; set; }
 

@@ -1,6 +1,8 @@
 ﻿using GPSer.API.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
-namespace GPSer.API.DTOs.User;
+namespace GPSer.API.DTOs;
 
 public class UserDTO
 {
@@ -14,6 +16,6 @@ public class UserDTO
 
     public string Email { get; set; }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public Roles Role { get; set; }
 }
-

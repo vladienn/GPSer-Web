@@ -11,6 +11,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
 {
     private readonly GPSerDbContext dbContext;
     private readonly ILogger<Repository<TEntity>> logger;
+    private readonly ISpecificationEvaluator specificationEvaluator;
 
     public Repository(GPSerDbContext dbContext, ILogger<Repository<TEntity>> logger)
     {
@@ -18,11 +19,18 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
         this.logger = logger;
     }
 
+    public Repository(GPSerDbContext dbContext, ILogger<Repository<TEntity>> logger, ISpecificationEvaluator specificationEvaluator) : this(dbContext, logger)
+    {
+        this.specificationEvaluator = specificationEvaluator;
+    }
+
     TEntity? IRepository<TEntity>.GetById(int id) => dbContext.Set<TEntity>().Find(id);
 
     TEntity IRepository<TEntity>.GetById(string id) => dbContext.Set<TEntity>().Find(id);
 
     TEntity IRepository<TEntity>.GetById(Guid id) => dbContext.Set<TEntity>().Find(id);
+
+    TEntity IRepository<TEntity>.FirstOrDefault(ISpecification<TEntity> spec) => ApplySpecification(spec).FirstOrDefault();
 
     IQueryable<TEntity> IRepository<TEntity>.ListAll() => dbContext.Set<TEntity>();
 
@@ -78,6 +86,8 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
 
     async Task<TEntity> IRepository<TEntity>.FirstOrDefaultAsync(CancellationToken cancellationToken) => await dbContext.Set<TEntity>().FirstOrDefaultAsync(cancellationToken);
 
+    async Task<TEntity> IRepository<TEntity>.FirstOrDefaultAsync(ISpecification<TEntity> spec) => await ApplySpecification(spec).FirstOrDefaultAsync();
+    
     async Task<IReadOnlyList<TEntity>> IRepository<TEntity>.ListAllAsync() => await dbContext.Set<TEntity>().ToListAsync();
 
     async Task<TEntity> IRepository<TEntity>.AddAsync(TEntity entity)
@@ -120,4 +130,23 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
 
     async Task<int> IRepository<TEntity>.CountAsync() => await dbContext.Set<TEntity>().CountAsync();
 
+    protected IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> specification)
+    {
+        return specificationEvaluator.GetQuery(dbContext.Set<TEntity>().AsQueryable(), specification);
+    }
+
+    protected IQueryable<TResult> ApplySpecification<TResult>(ISpecification<TEntity, TResult> specification)
+    {
+        if (specification is null)
+        {
+            throw new ArgumentNullException(nameof(specification), "Specification is required");
+        }
+
+        if (specification.Selector is null)
+        {
+            throw new SelectorNotFoundException();
+        }
+
+        return specificationEvaluator.GetQuery(dbContext.Set<TEntity>().AsQueryable(), specification);
+    }
 }

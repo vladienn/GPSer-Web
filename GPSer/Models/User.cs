@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GPSer.API.Models;
 public class User : Entity<Guid>
@@ -18,6 +19,6 @@ public class User : Entity<Guid>
     public string? Email { get; set; }
 
     [Required]
-    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
     public Roles Role { get; set; }
 }

@@ -8,6 +8,7 @@ namespace GPSer.API.Data.UnitOfWork
         TEntity GetById(int id);
         TEntity GetById(string id);
         TEntity GetById(Guid id);
+        TEntity FirstOrDefault(ISpecification<TEntity> spec);
         IQueryable<TEntity> ListAll();
         TEntity Add(TEntity entity);
         IReadOnlyCollection<TEntity> Add(IReadOnlyCollection<TEntity> entities);
@@ -24,6 +25,7 @@ namespace GPSer.API.Data.UnitOfWork
         Task<TEntity> GetByIdAsync(Guid id);
         Task<TEntity> FirstOrDefaultAsync();
         Task<TEntity> FirstOrDefaultAsync(CancellationToken cancellationToken);
+        Task<TEntity> FirstOrDefaultAsync(ISpecification<TEntity> spec);
         Task<IReadOnlyList<TEntity>> ListAllAsync();
         Task<TEntity> AddAsync(TEntity entity);
         Task<int> AddAsync(IReadOnlyCollection<TEntity> entities);
