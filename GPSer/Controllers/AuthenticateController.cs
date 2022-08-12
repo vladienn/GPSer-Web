@@ -81,7 +81,7 @@ namespace GPSer.API.Controllers
             var token = new JwtSecurityToken(issuer: config["Jwt:Issuer"],
                 audience: config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(15),
+                expires: DateTime.Now.AddHours(5),
                 signingCredentials: signinCredentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

@@ -12,10 +12,10 @@ using MQTTnet.Client;
 using MQTTnet;
 using GPSer.API.Workers;
 using GPSer.API.State;
+using MediatR;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 // Auto Mapper Configurations
 var mapperConfig = new MapperConfiguration(mc =>
@@ -24,7 +24,8 @@ var mapperConfig = new MapperConfiguration(mc =>
 });
 
 IMapper mapper = mapperConfig.CreateMapper();
-builder.Services.AddSingleton(mapper); 
+builder.Services.AddSingleton(mapper);
+builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -57,6 +58,8 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
 
 builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
+
+builder.Services.AddHttpContextAccessor();
 
 //Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

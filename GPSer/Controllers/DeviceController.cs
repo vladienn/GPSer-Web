@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using GPSer.API.Commands;
 using GPSer.API.Data.UnitOfWork;
 using GPSer.API.DTOs;
 using GPSer.API.Models;
 using GPSer.Data;
 using GPSer.Models;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -22,12 +24,14 @@ namespace GPSer.Controllers
         private readonly IRepository<Device> deviceRepo;
         private readonly IUserRepository userRepo;
         private readonly IMapper mapper;
+        private readonly IMediator mediator;
 
-        public DeviceController(IRepository<Device> deviceRepo, IMapper mapper, IUserRepository userRepo)
+        public DeviceController(IRepository<Device> deviceRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator)
         {
             this.deviceRepo = deviceRepo;
             this.mapper = mapper;
             this.userRepo = userRepo;
+            this.mediator = mediator;
         }
 
         [HttpGet]
@@ -59,24 +63,29 @@ namespace GPSer.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Device>> AddDevice(DeviceDTO deviceDTO)
+        public async Task<ActionResult<Device>> AddDevice(CreateDeviceCommand command)
         {
-            Device device = mapper.Map<Device>(deviceDTO);
-
-            await deviceRepo.AddAsync(device);
+            var device = await mediator.Send(command);
 
             return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateDevice(Guid id, Device device)
+        public async Task<IActionResult> UpdateDevice(Guid id, EditDeviceCommand command)
         {
-            if (id == device.Id)
+            Device oldDevice = await deviceRepo.GetByIdAsync(id);
+            if (oldDevice == null)
+            {
+                return NotFound();
+            }
+
+            command.Id = id;
+            var result = await mediator.Send(command);
+
+            if (!result)
             {
                 return BadRequest();
             }
-
-            deviceRepo.Update(device);
 
             return NoContent();
         }
