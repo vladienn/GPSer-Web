@@ -14,6 +14,7 @@ using GPSer.API.Workers;
 using GPSer.API.State;
 using MediatR;
 using System.Reflection;
+using GPSer.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddHostedService<MQTTLocationWorker>();
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
+builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
 
 builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
 

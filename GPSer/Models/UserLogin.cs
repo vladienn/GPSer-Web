@@ -6,4 +6,3 @@ public class UserLogin
 
     public string Password { get; set; }
 }
-

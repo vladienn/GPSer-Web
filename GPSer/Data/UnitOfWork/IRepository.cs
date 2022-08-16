@@ -27,6 +27,7 @@ namespace GPSer.API.Data.UnitOfWork
         Task<TEntity> FirstOrDefaultAsync(CancellationToken cancellationToken);
         Task<TEntity> FirstOrDefaultAsync(ISpecification<TEntity> spec);
         Task<IReadOnlyList<TEntity>> ListAllAsync();
+        Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> spec);
         Task<TEntity> AddAsync(TEntity entity);
         Task<int> AddAsync(IReadOnlyCollection<TEntity> entities);
         Task UpdateAsync(TEntity entity);

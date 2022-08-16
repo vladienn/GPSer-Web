@@ -1,6 +1,5 @@
-﻿namespace GPSer.API.Models
+﻿namespace GPSer.API.Models;
+
+public interface IEntity
 {
-    public interface IEntity
-    {
-    }
 }

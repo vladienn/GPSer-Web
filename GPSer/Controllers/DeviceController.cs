@@ -34,6 +34,10 @@ namespace GPSer.Controllers
             this.mediator = mediator;
         }
 
+        /// <summary>
+        /// Returns all devices (Only Administrators)
+        /// </summary>
+        /// <returns>List of devices</returns>
         [HttpGet]
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<DeviceDTO>>> GetDevices()
@@ -42,7 +46,11 @@ namespace GPSer.Controllers
 
             return mapper.Map<List<DeviceDTO>>(devices);
         }
-        
+
+        /// <summary>
+        /// Returns all devices for the User
+        /// </summary>
+        /// <returns>List of devices</returns>
         [HttpGet("byUser")]
         public async Task<ActionResult<List<DeviceDTO>>> GetUserDevices()
         {
@@ -54,6 +62,10 @@ namespace GPSer.Controllers
             return mapper.Map<List<DeviceDTO>>(devices);
         }
 
+        /// <summary>
+        /// Returns device by id
+        /// </summary>
+        /// <returns>Device or NotFound</returns>
         [HttpGet("{id}")]
         public async Task<ActionResult<IEnumerable<Device>>> GetDeviceById(Guid id)
         {
@@ -62,6 +74,11 @@ namespace GPSer.Controllers
             return device == null ? NotFound() : Ok(device);
         }
 
+        /// <summary>
+        /// Creates device
+        /// </summary>
+        /// <param name="command">Request body</param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult<Device>> AddDevice(CreateDeviceCommand command)
         {
@@ -70,6 +87,12 @@ namespace GPSer.Controllers
             return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
         }
 
+        /// <summary>
+        /// Updates device
+        /// </summary>
+        /// <param name="id">Device id</param>
+        /// <param name="command">Request body</param>
+        /// <returns></returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateDevice(Guid id, EditDeviceCommand command)
         {
@@ -90,7 +113,13 @@ namespace GPSer.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Deletes device
+        /// </summary>
+        /// <returns></returns>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteDevice(Guid id)
         {
             var deviceToDelete = await deviceRepo.GetByIdAsync(id);
@@ -99,7 +128,12 @@ namespace GPSer.Controllers
                 return NotFound();
             }
 
-            deviceRepo.Delete(deviceToDelete);
+            var command = new DeleteDeviceCommand { DeviceId = id };
+            var result = await mediator.Send(command);
+            if (!result)
+            {
+                return BadRequest();
+            }
 
             return NoContent();
         }

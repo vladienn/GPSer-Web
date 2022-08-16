@@ -13,15 +13,17 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
     private readonly ILogger<Repository<TEntity>> logger;
     private readonly ISpecificationEvaluator specificationEvaluator;
 
+    //public Repository(GPSerDbContext dbContext, ILogger<Repository<TEntity>> logger)
+    //{
+    //    this.dbContext = dbContext;
+    //    this.logger = logger;
+    //}
+
     public Repository(GPSerDbContext dbContext, ILogger<Repository<TEntity>> logger)
     {
         this.dbContext = dbContext;
         this.logger = logger;
-    }
-
-    public Repository(GPSerDbContext dbContext, ILogger<Repository<TEntity>> logger, ISpecificationEvaluator specificationEvaluator) : this(dbContext, logger)
-    {
-        this.specificationEvaluator = specificationEvaluator;
+        specificationEvaluator = new SpecificationEvaluator();
     }
 
     TEntity? IRepository<TEntity>.GetById(int id) => dbContext.Set<TEntity>().Find(id);
@@ -89,6 +91,8 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, I
     async Task<TEntity> IRepository<TEntity>.FirstOrDefaultAsync(ISpecification<TEntity> spec) => await ApplySpecification(spec).FirstOrDefaultAsync();
     
     async Task<IReadOnlyList<TEntity>> IRepository<TEntity>.ListAllAsync() => await dbContext.Set<TEntity>().ToListAsync();
+
+    async Task<IReadOnlyList<TEntity>> IRepository<TEntity>.ListAsync(ISpecification<TEntity> spec) => await ApplySpecification(spec).ToListAsync();
 
     async Task<TEntity> IRepository<TEntity>.AddAsync(TEntity entity)
     {

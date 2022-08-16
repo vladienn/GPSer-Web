@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using GPSer.API.Services;
 
 namespace GPSer.API.Controllers
 {
@@ -19,14 +20,14 @@ namespace GPSer.API.Controllers
     [ApiController]
     public class AuthenticateController : ControllerBase
     {
-        private readonly IConfiguration config;
         private readonly IUserRepository userRepo;
+        private readonly IUserService userService;
         private readonly IMapper mapper;
 
-        public AuthenticateController(IUserRepository userRepo, IConfiguration config, IMapper mapper)
+        public AuthenticateController(IUserRepository userRepo, IUserService userService, IMapper mapper)
         {
             this.userRepo = userRepo;
-            this.config = config;
+            this.userService = userService;
             this.mapper = mapper;
         }
 
@@ -60,31 +61,11 @@ namespace GPSer.API.Controllers
 
             if (user != null)
             {
-                var token = Generate(user);
+                var token = userService.GenerateJWTToken(user);
                 return Ok(token);
             }
 
             return Unauthorized();
-        }
-
-        private string Generate(User user)
-        {
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Jwt:Key"]));
-            var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserName),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
-            };
-
-            var token = new JwtSecurityToken(issuer: config["Jwt:Issuer"],
-                audience: config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(5),
-                signingCredentials: signinCredentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

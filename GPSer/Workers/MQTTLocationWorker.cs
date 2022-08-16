@@ -43,7 +43,7 @@ public class MQTTLocationWorker : BackgroundService
             await remoteClientState.MqttClient.ConnectAsync(mqttClientOptions, cancellationToken);
 
             var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-                .WithTopicFilter(f => { f.WithTopic("4312513255"); })
+                .WithTopicFilter(f => { f.WithTopic("65232"); })
                 .Build();
 
             await remoteClientState.MqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
@@ -99,50 +99,5 @@ public class MQTTLocationWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         //await BackgroundCheck(stoppingToken);
-    }
-
-    private async Task BackgroundCheck(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            remoteClientState.MqttClient.ApplicationMessageReceivedAsync += e =>
-            {
-                try
-                {
-
-                    using var scope = services.CreateScope();
-
-                    var deviceRepo = scope.ServiceProvider.GetRequiredService<IRepository<Device>>();
-                    var locationDataRepo = scope.ServiceProvider.GetRequiredService<IRepository<LocationData>>();
-
-                    string topic = e.ApplicationMessage.Topic;
-                    if (string.IsNullOrWhiteSpace(topic) == false)
-                    {
-                        string payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-                        Console.WriteLine($"Topic: {topic}. Message Received: {payload}");
-
-                        var device = deviceRepo.FirstOrDefault(new BySerialNumberSpec(topic));
-                       
-                        var newLocationData = new LocationData
-                        {
-                            Id = new Guid(),
-                            Latitude = payload.Substring(0, 6),
-                            Longitude = payload.Substring(7, 12),
-                            Speed = 12.3,
-                            Device = device,
-                            DeviceId = device.Id
-                        };
-
-                        locationDataRepo.Add(newLocationData);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message, ex);
-                }
-
-                return Task.CompletedTask;
-            };
-        }
     }
 }

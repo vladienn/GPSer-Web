@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using GPSer.API.Commands;
 using GPSer.API.Data.UnitOfWork;
 using GPSer.API.DTOs;
 using GPSer.API.Models;
 using GPSer.Models;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -21,37 +23,39 @@ namespace GPSer.API.Controllers
         private readonly IUserRepository userRepo;
         private readonly IRepository<LocationData> locationDataRepo;
         private readonly IMapper mapper;
+        private readonly IMediator mediator;
 
-        public LocationDataController(IRepository<Device> deviceRepo, IRepository<LocationData> locationDataRepo, IMapper mapper, IUserRepository userRepo)
+        public LocationDataController(IRepository<Device> deviceRepo, IRepository<LocationData> locationDataRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator)
         {
             this.deviceRepo = deviceRepo;
             this.locationDataRepo = locationDataRepo;
             this.mapper = mapper;
             this.userRepo = userRepo;
+            this.mediator = mediator;
         }
 
+        /// <summary>
+        /// Returns all locationData by filter on current user
+        /// </summary>
+        /// <returns>List of Locations</returns>
         [HttpGet]
-        public async Task<ActionResult<List<LocationDataDTO>>> GetLocations(Guid deviceId)
+        public async Task<ActionResult<LocationDataSearchResultDTO>> GetLocations([FromQuery] SearchLocationDataCommand command)
         {
-            var device = await deviceRepo.GetByIdAsync(deviceId);
+            var device = await deviceRepo.GetByIdAsync(command.DeviceId);
 
             if (device == null)
             {
                 return StatusCode(500, "This device does not exist!");
             }
 
-            var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await userRepo.GetByUserName(userName);
+            var locationDataRecords = await mediator.Send(command);
 
-            if (device.UserId != user.Id)
+            var searchResult = new LocationDataSearchResultDTO
             {
-                return StatusCode(500, "This user is not the owner of this device!");
-            }
+                Records = mapper.Map<List<LocationDataDTO>>(locationDataRecords)
+            };
 
-            //TODO Change db data 
-            var locationData = await locationDataRepo.ListAll().Where(x => x.DeviceId == device.Id).ToListAsync();
-
-            return mapper.Map<List<LocationDataDTO>>(locationData);
+            return Ok(searchResult);
         }
     }
 }

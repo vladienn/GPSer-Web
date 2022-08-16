@@ -9,4 +9,3 @@ public enum Roles
     [EnumMember(Value = "User")]
     User
 }
-
