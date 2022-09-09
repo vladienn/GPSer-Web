@@ -26,6 +26,18 @@ public class MQTTLocationWorker : BackgroundService
     {
         logger.LogInformation("MQTT Location worker is running...");
 
+        var scope = services.CreateScope();
+
+        var deviceRepo = scope.ServiceProvider.GetRequiredService<IRepository<Device>>();
+        var deviceState = scope.ServiceProvider.GetRequiredService<IDeviceState>();
+
+        var devices = await deviceRepo.ListAllAsync();
+
+        foreach (var device in devices)
+        {
+            deviceState.Items[device.SerialNumber] = new DeviceStateItem(device, DeviceStatus.Offline);
+        }
+
         MqttFactory mqttFactory = new MqttFactory();
         remoteClientState.MqttClient = mqttFactory.CreateMqttClient();
 
@@ -43,7 +55,7 @@ public class MQTTLocationWorker : BackgroundService
             await remoteClientState.MqttClient.ConnectAsync(mqttClientOptions, cancellationToken);
 
             var mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-                .WithTopicFilter(f => { f.WithTopic("65232"); })
+                .WithTopicFilter(f => { f.WithTopic("data_in/#"); })
                 .Build();
 
             await remoteClientState.MqttClient.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
@@ -57,9 +69,6 @@ public class MQTTLocationWorker : BackgroundService
         {
             try
             {
-                using var scope = services.CreateScope();
-
-                var deviceRepo = scope.ServiceProvider.GetRequiredService<IRepository<Device>>();
                 var locationDataRepo = scope.ServiceProvider.GetRequiredService<IRepository<LocationData>>();
 
                 string topic = e.ApplicationMessage.Topic;
@@ -68,23 +77,30 @@ public class MQTTLocationWorker : BackgroundService
                     string payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
                     Console.WriteLine($"Topic: {topic}. Message Received: {payload}");
 
-                    //var device = deviceRepo.FirstOrDefault(new BySerialNumberSpec(topic));
-                    var devices = await deviceRepo.ListAllAsync();
+                    var deviceSerialNumber = topic.Substring(topic.LastIndexOf("data_in/") + 8);
+                    var deviceRead = deviceState.Items.Where(x => x.Key == deviceSerialNumber).Select(x => x.Value.Device).FirstOrDefault();
 
-                    foreach (Device device in devices)
+                    if (deviceRead != null)
                     {
                         var newLocationData = new LocationData
                         {
                             Id = new Guid(),
                             Latitude = payload.Substring(0, 6),
                             Longitude = payload.Substring(7, 6),
-                            Speed = 12.3,
-                            Device = device,
-                            DeviceId = device.Id
+                            Speed = Convert.ToDouble(payload.Substring(14, 5)),
+                            Device = deviceRead,
+                            DeviceId = deviceRead.Id
                         };
 
                         await locationDataRepo.AddAsync(newLocationData);
                     }
+
+                    var approvalMessage = new MqttApplicationMessageBuilder()
+                    .WithTopic($"data_out/{deviceSerialNumber}")
+                    .WithPayload("Received!")
+                    .Build();
+
+                    await remoteClientState.MqttClient.PublishAsync(approvalMessage, cancellationToken);
                 }
             }
             catch (Exception ex)
@@ -98,6 +114,10 @@ public class MQTTLocationWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        //await BackgroundCheck(stoppingToken);
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            logger.LogInformation("ping");
+            await Task.Delay(TimeSpan.FromMilliseconds(5000), stoppingToken);
+        }
     }
 }

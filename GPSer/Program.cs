@@ -53,13 +53,14 @@ builder.Services.AddDbContext<GPSerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-builder.Services.AddHostedService<MQTTLocationWorker>();
-
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
 builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
 
 builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
+builder.Services.AddSingleton<IDeviceState, DeviceState>();
+
+builder.Services.AddHostedService<MQTTLocationWorker>();
 
 builder.Services.AddHttpContextAccessor();
 

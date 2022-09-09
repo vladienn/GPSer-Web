@@ -1,5 +1,6 @@
 ﻿using GPSer.API.Data.UnitOfWork;
 using GPSer.API.Services;
+using GPSer.API.State;
 using GPSer.Models;
 using MediatR;
 
@@ -9,11 +10,13 @@ public class DeleteDeviceCommandHandler : IRequestHandler<DeleteDeviceCommand, b
 {
     private readonly IRepository<Device> deviceRepo;
     private readonly IUserService userService;
+    private readonly IDeviceState deviceState;
 
-    public DeleteDeviceCommandHandler(IRepository<Device> deviceRepo, IUserService userService)
+    public DeleteDeviceCommandHandler(IRepository<Device> deviceRepo, IUserService userService, IDeviceState deviceState)
     {
         this.deviceRepo = deviceRepo;
         this.userService = userService;
+        this.deviceState = deviceState;
     }
 
     public async Task<bool> Handle(DeleteDeviceCommand request, CancellationToken cancellationToken)
@@ -29,6 +32,8 @@ public class DeleteDeviceCommandHandler : IRequestHandler<DeleteDeviceCommand, b
         }
 
         await deviceRepo.DeleteAsync(device);
+
+        deviceState.Items.Remove(device.SerialNumber);
 
         return true;
     }
