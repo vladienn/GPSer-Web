@@ -61,6 +61,7 @@ builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
 builder.Services.AddSingleton<IDeviceState, DeviceState>();
 
 builder.Services.AddHostedService<MQTTLocationWorker>();
+builder.Services.AddHostedService<MQTTComandReaderWorker>();
 
 builder.Services.AddHttpContextAccessor();
 

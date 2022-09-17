@@ -4,9 +4,9 @@ namespace GPSer.API.DTOs;
 
 public class LocationDataDTO
 {
-    public string Latitude { get; set; }
+    public string Latitude { get; set; } = null!;
 
-    public string Longitude { get; set; }
+    public string Longitude { get; set; } = null!;
 
     public double Speed { get; set; }
 

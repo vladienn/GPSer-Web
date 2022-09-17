@@ -4,6 +4,7 @@ using GPSer.API.Commands;
 using GPSer.API.Data.UnitOfWork;
 using GPSer.API.DTOs;
 using GPSer.API.Models;
+using GPSer.API.State;
 using GPSer.Data;
 using GPSer.Models;
 using MediatR;
@@ -25,13 +26,15 @@ namespace GPSer.Controllers
         private readonly IUserRepository userRepo;
         private readonly IMapper mapper;
         private readonly IMediator mediator;
+        private readonly IDeviceState deviceState;
 
-        public DeviceController(IRepository<Device> deviceRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator)
+        public DeviceController(IRepository<Device> deviceRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator, IDeviceState deviceState)
         {
             this.deviceRepo = deviceRepo;
             this.mapper = mapper;
             this.userRepo = userRepo;
             this.mediator = mediator;
+            this.deviceState = deviceState;
         }
 
         /// <summary>
@@ -44,7 +47,14 @@ namespace GPSer.Controllers
         {
             var devices = await deviceRepo.ListAll().ToListAsync();
 
-            return mapper.Map<List<DeviceDTO>>(devices);
+            var devicesDto = mapper.Map<List<DeviceDTO>>(devices);
+
+            foreach (var device in deviceState.Items)
+            {
+                devicesDto.Find(x => x.SerialNumber == device.Key)!.Status = device.Value.Status;
+            }
+
+            return devicesDto;
         }
 
         /// <summary>
@@ -59,7 +69,14 @@ namespace GPSer.Controllers
 
             var devices = await deviceRepo.ListAll().Where(x => x.UserId == user.Id).ToListAsync();
 
-            return mapper.Map<List<DeviceDTO>>(devices);
+            var devicesDto = mapper.Map<List<DeviceDTO>>(devices);
+
+            foreach (var device in deviceState.Items)
+            {
+                devicesDto.Find(x => x.SerialNumber == device.Key)!.Status = device.Value.Status;
+            }
+
+            return devicesDto;
         }
 
         /// <summary>
