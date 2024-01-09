@@ -3,7 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPSer.API", "GPSer\GPSer.API.csproj", "{6DABE134-CE65-4BAA-84FB-3F6B02B5F69B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{454D7D8A-90C7-469D-8049-837A427C6BFA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPSer.Model", "src\GPSer.Model\GPSer.Model.csproj", "{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPSer.Data", "src\GPSer.Data\GPSer.Data.csproj", "{630EA570-ECBC-47EE-88E4-E9B6633CA29D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPSer.Core", "src\GPSer.Core\GPSer.Core.csproj", "{B7115B7C-96EF-4048-8F58-38F4785B6718}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GPSer.API", "src\GPSer.API\GPSer.API.csproj", "{D999B858-5443-43D1-BD06-01162C109D6C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,13 +19,30 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6DABE134-CE65-4BAA-84FB-3F6B02B5F69B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6DABE134-CE65-4BAA-84FB-3F6B02B5F69B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6DABE134-CE65-4BAA-84FB-3F6B02B5F69B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6DABE134-CE65-4BAA-84FB-3F6B02B5F69B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{630EA570-ECBC-47EE-88E4-E9B6633CA29D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{630EA570-ECBC-47EE-88E4-E9B6633CA29D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{630EA570-ECBC-47EE-88E4-E9B6633CA29D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{630EA570-ECBC-47EE-88E4-E9B6633CA29D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7115B7C-96EF-4048-8F58-38F4785B6718}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7115B7C-96EF-4048-8F58-38F4785B6718}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7115B7C-96EF-4048-8F58-38F4785B6718}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7115B7C-96EF-4048-8F58-38F4785B6718}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D999B858-5443-43D1-BD06-01162C109D6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D999B858-5443-43D1-BD06-01162C109D6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D999B858-5443-43D1-BD06-01162C109D6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D999B858-5443-43D1-BD06-01162C109D6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AC06DE12-9E2E-4198-BEF9-CFEE47E954B7} = {454D7D8A-90C7-469D-8049-837A427C6BFA}
+		{630EA570-ECBC-47EE-88E4-E9B6633CA29D} = {454D7D8A-90C7-469D-8049-837A427C6BFA}
+		{B7115B7C-96EF-4048-8F58-38F4785B6718} = {454D7D8A-90C7-469D-8049-837A427C6BFA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C8CDBFD-22E8-4851-8EAF-FB6D2E6DBDF2}
