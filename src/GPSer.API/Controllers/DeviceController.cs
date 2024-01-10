@@ -13,7 +13,7 @@ using System.Security.Claims;
 
 namespace GPSer.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/devices")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 public class DeviceController : ControllerBase
@@ -33,13 +33,9 @@ public class DeviceController : ControllerBase
         this.deviceState = deviceState;
     }
 
-    /// <summary>
-    /// Returns all devices (Only Administrators)
-    /// </summary>
-    /// <returns>List of devices</returns>
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<List<DeviceDTO>>> GetDevices()
+    public async Task<ActionResult<List<DeviceDTO>>> GetAll()
     {
         var devices = await deviceRepo.ListAll().ToListAsync();
 
@@ -53,11 +49,7 @@ public class DeviceController : ControllerBase
         return devicesDto;
     }
 
-    /// <summary>
-    /// Returns all devices for the User
-    /// </summary>
-    /// <returns>List of devices</returns>
-    [HttpGet("byUser")]
+    [HttpGet("user")]
     public async Task<ActionResult<List<DeviceDTO>>> GetUserDevices()
     {
         var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -75,39 +67,24 @@ public class DeviceController : ControllerBase
         return devicesDto;
     }
 
-    /// <summary>
-    /// Returns device by id
-    /// </summary>
-    /// <returns>Device or NotFound</returns>
     [HttpGet("{id}")]
-    public async Task<ActionResult<IEnumerable<Device>>> GetDeviceById(Guid id)
+    public async Task<ActionResult<IEnumerable<Device>>> GetById(Guid id)
     {
         var device = await deviceRepo.GetByIdAsync(id);
 
         return device == null ? NotFound() : Ok(device);
     }
 
-    /// <summary>
-    /// Creates device
-    /// </summary>
-    /// <param name="command">Request body</param>
-    /// <returns></returns>
     [HttpPost]
-    public async Task<ActionResult<Device>> AddDevice(CreateDeviceCommand command)
+    public async Task<ActionResult<Device>> Create(CreateDeviceCommand command)
     {
         var device = await mediator.Send(command);
 
         return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
     }
 
-    /// <summary>
-    /// Updates device
-    /// </summary>
-    /// <param name="id">Device id</param>
-    /// <param name="command">Request body</param>
-    /// <returns></returns>
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateDevice(Guid id, EditDeviceCommand command)
+    public async Task<IActionResult> Update(Guid id, EditDeviceCommand command)
     {
         Device oldDevice = await deviceRepo.GetByIdAsync(id);
         if (oldDevice == null)
@@ -126,14 +103,10 @@ public class DeviceController : ControllerBase
         return NoContent();
     }
 
-    /// <summary>
-    /// Deletes device
-    /// </summary>
-    /// <returns></returns>
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeleteDevice(Guid id)
+    public async Task<IActionResult> Delete(Guid id)
     {
         var deviceToDelete = await deviceRepo.GetByIdAsync(id);
         if (deviceToDelete == null)

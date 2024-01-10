@@ -4,7 +4,6 @@ using GPSer.Core.Services;
 using GPSer.Core.State;
 using GPSer.Data;
 using GPSer.Data.UnitOfWork;
-using GPSer.Workers;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +15,8 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 Log.Logger = CreateSerilogLogger(builder.Configuration);
 builder.Host.UseSerilog();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
@@ -25,7 +26,17 @@ builder.Services.AddMediatR(cfg =>
 });
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:3000")
+                                                  .AllowAnyHeader()
+                                                  .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -57,8 +68,8 @@ builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
 builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
 builder.Services.AddSingleton<IDeviceState, DeviceState>();
 
-builder.Services.AddHostedService<MQTTLocationWorker>();
-builder.Services.AddHostedService<MQTTComandReaderWorker>();
+//builder.Services.AddHostedService<MQTTLocationWorker>();
+//builder.Services.AddHostedService<MQTTComandReaderWorker>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -95,6 +106,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthentication();
 

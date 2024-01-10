@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GPSer.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/location")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 public class LocationDataController : ControllerBase
@@ -30,10 +30,6 @@ public class LocationDataController : ControllerBase
         this.mediator = mediator;
     }
 
-    /// <summary>
-    /// Returns all locationData by filter on current user
-    /// </summary>
-    /// <returns>List of Locations</returns>
     [HttpGet]
     public async Task<ActionResult<LocationDataSearchResultDTO>> GetLocations([FromQuery] SearchLocationDataCommand command)
     {

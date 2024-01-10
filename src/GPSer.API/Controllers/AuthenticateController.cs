@@ -51,12 +51,12 @@ public class AuthenticateController : ControllerBase
 
         var user = users.First(x => x.UserName == userLogin.UserName && x.Password == userLogin.Password);
 
-        if (user != null)
+        if (user == null)
         {
-            var token = userService.GenerateJWTToken(user);
-            return Ok(token);
+            return Unauthorized();
         }
 
-        return Unauthorized();
+        var token = userService.GenerateJWTToken(user);
+        return Ok(token);
     }
 }
