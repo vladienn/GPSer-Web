@@ -9,32 +9,19 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace GPSer.Controllers;
 
 [Route("api/devices")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
-public class DeviceController : ControllerBase
+public class DeviceController(
+    IRepository<Device> deviceRepo,
+    IMapper mapper, IMediator mediator,
+    IDeviceState deviceState) : ControllerBase
 {
-    private readonly IRepository<Device> deviceRepo;
-    private readonly IUserRepository userRepo;
-    private readonly IMapper mapper;
-    private readonly IMediator mediator;
-    private readonly IDeviceState deviceState;
-
-    public DeviceController(IRepository<Device> deviceRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator, IDeviceState deviceState)
-    {
-        this.deviceRepo = deviceRepo;
-        this.mapper = mapper;
-        this.userRepo = userRepo;
-        this.mediator = mediator;
-        this.deviceState = deviceState;
-    }
-
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = UserRoles.Admin)]
     public async Task<ActionResult<List<DeviceDTO>>> GetAll()
     {
         var devices = await deviceRepo.ListAll().ToListAsync();
@@ -49,23 +36,23 @@ public class DeviceController : ControllerBase
         return devicesDto;
     }
 
-    [HttpGet("user")]
-    public async Task<ActionResult<List<DeviceDTO>>> GetUserDevices()
-    {
-        var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var user = await userRepo.GetByUserName(userName);
+    //[HttpGet("user")]
+    //public async Task<ActionResult<List<DeviceDTO>>> GetUserDevices()
+    //{
+    //    var userName = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    //    var user = await userRepo.GetByUserName(userName);
 
-        var devices = await deviceRepo.ListAll().Where(x => x.UserId == user.Id).ToListAsync();
+    //    var devices = await deviceRepo.ListAll().Where(x => x.UserId == user.Id).ToListAsync();
 
-        var devicesDto = mapper.Map<List<DeviceDTO>>(devices);
+    //    var devicesDto = mapper.Map<List<DeviceDTO>>(devices);
 
-        foreach (var device in deviceState.Items)
-        {
-            devicesDto.Find(x => x.SerialNumber == device.Key)!.Status = device.Value.Status;
-        }
+    //    foreach (var device in deviceState.Items)
+    //    {
+    //        devicesDto.Find(x => x.SerialNumber == device.Key)!.Status = device.Value.Status;
+    //    }
 
-        return devicesDto;
-    }
+    //    return devicesDto;
+    //}
 
     [HttpGet("{id}")]
     public async Task<ActionResult<IEnumerable<Device>>> GetById(Guid id)
@@ -80,7 +67,7 @@ public class DeviceController : ControllerBase
     {
         var device = await mediator.Send(command);
 
-        return CreatedAtAction(nameof(GetDeviceById), new { id = device.Id }, device);
+        return CreatedAtAction(nameof(GetById), new { id = device.Id }, device);
     }
 
     [HttpPut("{id}")]

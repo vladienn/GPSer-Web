@@ -13,7 +13,6 @@ public class MappingProfile : Profile
         CreateMap<Device, DeviceDTO>().ReverseMap();
         CreateMap<Device, CreateDeviceCommand>().ReverseMap();
 
-        CreateMap<User, UserDTO>().ReverseMap();
         CreateMap<LocationDataDTO, LocationData>().ReverseMap();
     }
 }

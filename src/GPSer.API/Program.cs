@@ -1,19 +1,18 @@
 using GPSer.Core.Automapper;
 using GPSer.Core.Commands;
-using GPSer.Core.Services;
+using GPSer.Core.Options;
 using GPSer.Core.State;
 using GPSer.Data;
 using GPSer.Data.UnitOfWork;
 using MediatR;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+ConfigurationManager configuration = builder.Configuration;
 
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
@@ -40,30 +39,48 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "JWTToken_Auth_API",
-        Version = "v1"
-    });
     options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme.(\"bearer {token}\")",
     });
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+//builder.Services.AddSwaggerGen(options =>
+//{
+//    options.SwaggerDoc("v1", new OpenApiInfo
+//    {
+//        Title = "JWTToken_Auth_API",
+//        Version = "v1"
+//    });
+//    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+//    {
+//        Name = "Authorization",
+//        Type = SecuritySchemeType.ApiKey,
+//        Scheme = "Bearer",
+//        BearerFormat = "JWT",
+//        In = ParameterLocation.Header,
+//        Description = "JWT Authorization header using the Bearer scheme.(\"bearer {token}\")",
+//    });
+//    options.OperationFilter<SecurityRequirementsOperationFilter>();
+//});
 
 builder.Services.AddDbContext<GPSerDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+builder.Services.AddIdentityCore<IdentityUser>()
+    .AddEntityFrameworkStores<GPSerDbContext>()
+    //.AddDefaultTokenProviders()
+    .AddApiEndpoints();
+
+//builder.Services.AddIdentityApiEndpoints<IdentityUser>()
+//    .AddRoles<IdentityRole>()
+//    .AddEntityFrameworkStores<GPSerDbContext>();
+
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped(typeof(IUserRepository), typeof(UserRepository));
-builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
 
 builder.Services.AddSingleton<IRemoteClientState, RemoteClientState>();
 builder.Services.AddSingleton<IDeviceState, DeviceState>();
@@ -73,21 +90,34 @@ builder.Services.AddSingleton<IDeviceState, DeviceState>();
 
 builder.Services.AddHttpContextAccessor();
 
-//Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
+builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
+    .AddIdentityCookies();
+builder.Services.AddAuthorizationBuilder();
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(options =>
+//{
+//    options.SaveToken = true;
+//    options.RequireHttpsMetadata = false;
+//    options.TokenValidationParameters = new TokenValidationParameters()
+//    {
+//        ValidateIssuer = true,
+//        ValidateAudience = true,
+//        ValidAudience = configuration["JWT:Audience"],
+//        ValidIssuer = configuration["JWT:Issuer"],
+//        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]))
+//    };
+//});
+
+
+builder.Services.AddOptions<JwtOptions>()
+    .Bind(builder.Configuration.GetSection(JwtOptions.Jwt))
+    .ValidateDataAnnotations();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -109,8 +139,9 @@ app.UseHttpsRedirection();
 
 app.UseCors(MyAllowSpecificOrigins);
 
-app.UseAuthentication();
+app.MapIdentityApi<IdentityUser>();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

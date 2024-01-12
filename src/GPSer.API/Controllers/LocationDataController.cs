@@ -16,17 +16,15 @@ namespace GPSer.Controllers;
 public class LocationDataController : ControllerBase
 {
     private readonly IRepository<Device> deviceRepo;
-    private readonly IUserRepository userRepo;
     private readonly IRepository<LocationData> locationDataRepo;
     private readonly IMapper mapper;
     private readonly IMediator mediator;
 
-    public LocationDataController(IRepository<Device> deviceRepo, IRepository<LocationData> locationDataRepo, IMapper mapper, IUserRepository userRepo, IMediator mediator)
+    public LocationDataController(IRepository<Device> deviceRepo, IRepository<LocationData> locationDataRepo, IMapper mapper, IMediator mediator)
     {
         this.deviceRepo = deviceRepo;
         this.locationDataRepo = locationDataRepo;
         this.mapper = mapper;
-        this.userRepo = userRepo;
         this.mediator = mediator;
     }
 

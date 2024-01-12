@@ -1,62 +1,91 @@
-﻿using AutoMapper;
-using GPSer.Core.DTOs;
-using GPSer.Core.Services;
-using GPSer.Data.UnitOfWork;
+﻿using GPSer.Core.DTOs;
+using GPSer.Core.DTOs.Au;
+using GPSer.Core.Options;
 using GPSer.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace GPSer.Controllers;
 
-[Route("api/[controller]")]
+[Route("api/authenticate")]
 [ApiController]
-public class AuthenticateController : ControllerBase
+public class AuthenticateController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IOptions<JwtOptions> jwtOptions) : ControllerBase
 {
-    private readonly IUserRepository userRepo;
-    private readonly IUserService userService;
-    private readonly IMapper mapper;
+    private readonly JwtOptions jwtOptions = jwtOptions.Value;
 
-    public AuthenticateController(IUserRepository userRepo, IUserService userService, IMapper mapper)
+    [AllowAnonymous]
+    [HttpPost]
+    [Route("login")]
+    public async Task<IActionResult> Login(UserLogin model)
     {
-        this.userRepo = userRepo;
-        this.userService = userService;
-        this.mapper = mapper;
+        var user = await userManager.FindByNameAsync(model.Username);
+        if (user != null && user.UserName != null && await userManager.CheckPasswordAsync(user, model.Password))
+        {
+            var userRoles = await userManager.GetRolesAsync(user);
+
+            var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.UserName),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                };
+
+            foreach (var userRole in userRoles)
+            {
+                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            }
+
+            var token = GetToken(authClaims);
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                expiration = token.ValidTo
+            });
+        }
+        return Unauthorized();
     }
 
     [AllowAnonymous]
     [HttpPost]
     [Route("register")]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Register(UserDTO userDTO)
+    public async Task<IActionResult> Register(UserDTO model)
     {
-        var userExists = await userRepo.GetByUserName(userDTO.UserName);
+        var userExists = await userManager.FindByNameAsync(model.Username);
         if (userExists != null)
+            return StatusCode(StatusCodes.Status500InternalServerError, new AuthResponseDto { Status = "Error", Message = "User already exists!" });
+
+        IdentityUser user = new()
         {
-            return StatusCode(500, "User already exists!");
-        }
+            Email = model.Email,
+            SecurityStamp = Guid.NewGuid().ToString(),
+            UserName = model.Username
+        };
+        var result = await userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+            return StatusCode(StatusCodes.Status500InternalServerError, new AuthResponseDto { Status = "Error", Message = result.Errors.ToString() });
 
-        User user = mapper.Map<User>(userDTO);
-
-        await userRepo.AddAsync(user);
-
-        return Ok("User created successfully!");
+        return Ok(new AuthResponseDto { Status = "Success", Message = "User created successfully!" });
     }
 
-    [AllowAnonymous]
-    [HttpPost]
-    [Route("login")]
-    public async Task<IActionResult> Login(UserLogin userLogin)
+    private JwtSecurityToken GetToken(List<Claim> authClaims)
     {
-        var users = await userRepo.ListAllAsync();
+        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret));
 
-        var user = users.First(x => x.UserName == userLogin.UserName && x.Password == userLogin.Password);
+        var token = new JwtSecurityToken(
+            issuer: jwtOptions.Issuer,
+            audience: jwtOptions.Audience,
+            expires: DateTime.Now.AddHours(3),
+            claims: authClaims,
+            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+            );
 
-        if (user == null)
-        {
-            return Unauthorized();
-        }
-
-        var token = userService.GenerateJWTToken(user);
-        return Ok(token);
+        return token;
     }
 }
